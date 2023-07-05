@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+</head>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<body>
+	<div class="main_bg">
+		<div class="air"></div>
+	</div>
+</body>
+</html>
+<script type="text/javascript">
+$(function(){
+	let air_speed = 5; //移动速度
+	let bullet_speed = 20; //子弹速度
+	let enemy_speed = 30; //敌机下降速度
+	let bullet_num = 0; 
+	let enemy_num = 0; 
+	let bg_w = $('.main_bg').css('width'); //获取背景宽度
+	let bg_h = $('.main_bg').css('height'); // 获取背景高度
+	let bulletArr = []; // 子弹数组
+	let enemyArr = []; // 敌机数组
+	$(document).keydown(function(e){
+		if(e.keyCode==40){ //向下移动
+			let a = $('.air').css('bottom');
+			let b = parseInt(a) - air_speed;
+			if(b <= 0){
+				b = 0+"px";
+			}
+			$('.air').css('bottom',b);
+		};
+		if(e.keyCode==38){ // 向上移动
+			let a = $('.air').css('bottom');
+			let b = parseInt(a) + air_speed;
+			if(b >= bg_h){
+				b = bg_h;
+			}
+			$('.air').css('bottom',b);
+		};
+		if(e.keyCode==37){ // 向左移动
+			let a = $('.air').css('left');
+			let b = parseInt(a) - air_speed;
+			if(b <= 0){
+				b = 0+"px";
+			}
+			$('.air').css('left',b);
+		};
+		if(e.keyCode==39){ //向右移动
+			let a = $('.air').css('left');
+			let b = parseInt(a) + air_speed;
+			if(b >= bg_w){
+				b = bg_w+"px";
+			}
+			$('.air').css('left',b);
+		};
+		if(e.keyCode==32){ // 空格射击
+			bullet_num++;
+			createBullet()
+		};
+	})
+
+	function RandomNumBoth(){
+      var Range = parseInt(bg_w) - 55;
+      var Rand = Math.random();
+      var num = Math.round(Rand * Range); //四舍五入
+      return num;
+	}
+
+	// 创建敌机
+	function create_enemy(num){
+		$('.main_bg').append('<div class="enemy enemy_'+enemy_num+'"></div>');
+		$('.enemy_'+enemy_num).css('left',num+"px");
+
+		enemyArr[enemy_num] = 'enemy_' + enemy_num;
+	}
+
+	// 创建子弹
+	function createBullet(){
+		$('.main_bg').append('<div class="bullet bullet_'+bullet_num+'"></div>');
+		let a = $('.air').css('left')
+		let b = $('.air').css('bottom')
+		let w = $('.air').css('width')
+		let h = $('.air').css('height')
+		$('.bullet_'+bullet_num).css('bottom',(parseInt(b)+parseInt(h))+"px");
+		$('.bullet_'+bullet_num).css('left',(parseInt(a)+parseInt(w)/2)+"px");
+		bulletArr[bullet_num] = '.bullet_'+bullet_num;
+	}
+
+	//定时器处理任务 敌机
+	setInterval(function(){
+		for (var i = enemyArr.length; i >= 1; i--) {
+		    let top = $('.enemy_'+i).css('top') != undefined ? $('.enemy_'+i).css('top') : 0;
+		    let new_top = (parseInt(top) + enemy_speed) + "px";
+
+		    $('.enemy_'+i).css('top',new_top);
+
+		   	// 清除出界敌机
+		    if(parseInt(new_top) > (parseInt(bg_h) - 60)){
+				delete enemyArr[i]
+				$('.enemy_'+i).remove()
+		    }
+		}
+	},2000)
+
+
+	setInterval(function(){
+		enemy_num++;
+		let num = RandomNumBoth()
+		create_enemy(num)
+	},5000)
+
+	// 定时器处理任务 子弹
+	setInterval(function(){
+		for (var i = bulletArr.length; i >= 1; i--) {
+		    let top = $('.bullet_'+i).css('top') != undefined ? $('.bullet_'+i).css('top') : $('.air div').css('top');
+		    let new_top = (parseInt(top) - bullet_speed) + "px";
+
+		    $('.bullet_'+i).css('top',new_top);
+
+		    // 清除出界子弹
+		    if(parseInt(top) < 0){
+				delete bulletArr[i]
+				$('.bullet_'+i).remove()
+		    }
+		}
+	},100)
+
+	// 定时器处理任务 是否击中
+	setInterval(function(){
+		for (var i = bulletArr.length; i >= 1; i--) {
+			let bullet_top = $('.bullet_'+i).css('top')
+			let bullet_left = $('.bullet_'+i).css('left')
+			for (var o = enemyArr.length; o >= 1; o--) {
+				let enemy_top = $('.enemy_'+o).css('top')
+				let enemy_left = $('.enemy_'+o).css('left')
+
+				if( parseInt(bullet_left) > parseInt(enemy_left) && parseInt(bullet_left) < (parseInt(enemy_left) + 55) && parseInt(bullet_top) <= parseInt(enemy_top) ){
+					$('.enemy_'+o).css('background-image',"url('./air/bz.webp')").fadeOut(1000,function(){
+						$(this).remove();
+					})
+					delete bulletArr[i]
+					$('.bullet_'+i).remove()
+					// delete enemyArr[o]
+					// $('.enemy_'+o).remove()
+
+				}
+			}
+		}
+	})
+})
+</script>
+<style>
+	.main_bg{
+		background-image: url("./air/bg.webp");
+		width: 800px;
+		height: 900px;
+		margin: auto;
+		position: relative;
+	}
+
+	.air{
+		background-image: url("./air/life.webp");
+		width: 50px;
+		height: 50px;
+		background-repeat:no-repeat;
+		position: absolute;
+		bottom: 5%;
+		left: 45%;
+	}
+
+	.main_bg .bullet{
+		background-image: url("./air/zd.webp");
+		width: 5px;
+		height: 8px;
+		position: absolute;
+		transform: translateX(-4px);
+	}
+
+	.main_bg .enemy{
+		background-image: url("./air/dj.webp");
+		width: 55px;
+		height: 50px;
+		background-repeat:no-repeat;
+		position: absolute;
+	}
+</style>
